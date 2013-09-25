@@ -3,7 +3,7 @@
 %define devname %mklibname -d leveldb
 
 Name:           leveldb
-Version:        1.12.0
+Version:        1.14.0
 Release:        1
 Summary:        A fast and lightweight key/value database library by Google
 Group:          Databases
