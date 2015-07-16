@@ -24,6 +24,7 @@ Patch5:         leveldb-0005-Added-a-DB-SuspendCompations-and-DB-ResumeCompactio
 # Cherry-picked from Basho's fork
 Patch6:		leveldb-0006-allow-Get-calls-to-avoid-copies-into-std-string.patch
 Patch7:		leveldb-1.18-configure.patch
+Patch8:		0001-debian-ports.patch
 BuildRequires:  snappy-devel
 BuildRequires:  autoconf
 BuildRequires:  automake
