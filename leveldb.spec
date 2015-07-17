@@ -60,6 +60,8 @@ autoreconf -ivf
 
 %install
 %makeinstall_std
+mkdir -p %{buildroot}/%{_includedir}/%{name}/helpers
+cp -f helpers/memenv/*.h %{buildroot}/%{_includedir}/%{name}/helpers
 
 %check
 %ifarch armv5tel armv7hl ppc %{power64}
