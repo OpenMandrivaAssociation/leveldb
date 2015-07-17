@@ -4,7 +4,7 @@
 
 Name:           leveldb
 Version:        1.18
-Release:        1
+Release:        2
 Summary:        A fast and lightweight key/value database library by Google
 Group:          Databases
 License:        BSD
