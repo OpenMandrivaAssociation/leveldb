@@ -5,7 +5,7 @@
 
 Name:           leveldb
 Version:        1.18
-Release:        3
+Release:        4
 Summary:        A fast and lightweight key/value database library by Google
 Group:          Databases
 License:        BSD
@@ -56,6 +56,7 @@ Library for %{name}
 Summary:        The development files for %{name}
 Group:          System/Libraries
 Requires:       %{libname} = %{version}-%{release}
+Requires:       %{libmemenv} = %{version}-%{release}
 
 %description -n	%{devname}
 Additional header files for development with %{name}.
@@ -100,7 +101,7 @@ cp -f leveldb.pc.in %{buildroot}%{_libdir}/pkgconfig/leveldb.pc
 make check || true
 %else
 # x86, x86_64, ppc, ppc64, ppc64v7 s390, and s390x are fine
-#make check
+make check
 %endif
 
 %files -n %{libname}
