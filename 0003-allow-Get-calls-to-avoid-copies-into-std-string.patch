@@ -1,7 +1,7 @@
-From 58f5e0f3954ba3b4ee858e18f7cac0c8d71b3f8a Mon Sep 17 00:00:00 2001
+From 900e5f564086850225ad42a63647ad9e8435d988 Mon Sep 17 00:00:00 2001
 From: Steve Vinoski <vinoski@ieee.org>
 Date: Thu, 20 Dec 2012 16:14:11 -0500
-Subject: [PATCH 6/6] allow Get() calls to avoid copies into std::string
+Subject: [PATCH 3/4] allow Get() calls to avoid copies into std::string
 
 Add a new abstract base class leveldb::Value that applications can easily
 derive from to supply their own memory management for values retrieved via
@@ -21,7 +21,7 @@ original version taking a std::string*.
  8 files changed, 49 insertions(+), 5 deletions(-)
 
 diff --git a/db/db_impl.cc b/db/db_impl.cc
-index 593a5b5..ca65fd1 100644
+index fc4209d..7ecfbd3 100644
 --- a/db/db_impl.cc
 +++ b/db/db_impl.cc
 @@ -81,6 +81,22 @@ struct DBImpl::CompactionState {
@@ -47,7 +47,7 @@ index 593a5b5..ca65fd1 100644
  // Fix user-supplied options to be reasonable
  template <class T,class V>
  static void ClipToRange(T* ptr, V minvalue, V maxvalue) {
-@@ -1071,6 +1087,13 @@ int64_t DBImpl::TEST_MaxNextLevelOverlappingBytes() {
+@@ -1080,6 +1096,13 @@ int64_t DBImpl::TEST_MaxNextLevelOverlappingBytes() {
  Status DBImpl::Get(const ReadOptions& options,
                     const Slice& key,
                     std::string* value) {
@@ -62,7 +62,7 @@ index 593a5b5..ca65fd1 100644
    MutexLock l(&mutex_);
    SequenceNumber snapshot;
 diff --git a/db/db_impl.h b/db/db_impl.h
-index 9f3949c..268f003 100644
+index cda1d51..1752878 100644
 --- a/db/db_impl.h
 +++ b/db/db_impl.h
 @@ -35,6 +35,9 @@ class DBImpl : public DB {
@@ -76,10 +76,10 @@ index 9f3949c..268f003 100644
    virtual const Snapshot* GetSnapshot();
    virtual void ReleaseSnapshot(const Snapshot* snapshot);
 diff --git a/db/db_test.cc b/db/db_test.cc
-index 782be38..8c898e1 100644
+index 424cedb..c57dd5d 100644
 --- a/db/db_test.cc
 +++ b/db/db_test.cc
-@@ -1816,6 +1816,11 @@ class ModelDB: public DB {
+@@ -1852,6 +1852,11 @@ class ModelDB: public DB {
      assert(false);      // Not implemented
      return Status::NotFound(key);
    }
@@ -118,10 +118,10 @@ index 92e90bb..278f1f3 100644
   private:
    ~MemTable();  // Private since only Unref() should be used to delete it
 diff --git a/db/version_set.cc b/db/version_set.cc
-index 4fd1dde..c5a1ca5 100644
+index aa83df5..02b29c9 100644
 --- a/db/version_set.cc
 +++ b/db/version_set.cc
-@@ -267,7 +267,7 @@ struct Saver {
+@@ -253,7 +253,7 @@ struct Saver {
    SaverState state;
    const Comparator* ucmp;
    Slice user_key;
@@ -130,7 +130,7 @@ index 4fd1dde..c5a1ca5 100644
  };
  }
  static void SaveValue(void* arg, const Slice& ikey, const Slice& v) {
-@@ -291,7 +291,7 @@ static bool NewestFirst(FileMetaData* a, FileMetaData* b) {
+@@ -322,7 +322,7 @@ void Version::ForEachOverlapping(Slice user_key, Slice internal_key,
  
  Status Version::Get(const ReadOptions& options,
                      const LookupKey& k,
@@ -140,7 +140,7 @@ index 4fd1dde..c5a1ca5 100644
    Slice ikey = k.internal_key();
    Slice user_key = k.user_key();
 diff --git a/db/version_set.h b/db/version_set.h
-index 9d084fd..d1e22c8 100644
+index 8dc14b8..6c7f03e 100644
 --- a/db/version_set.h
 +++ b/db/version_set.h
 @@ -70,7 +70,7 @@ class Version {
@@ -153,7 +153,7 @@ index 9d084fd..d1e22c8 100644
  
    // Adds "stats" into the current state.  Returns true if a new
 diff --git a/include/leveldb/db.h b/include/leveldb/db.h
-index 089707c..071f831 100644
+index c2e965f..f071660 100644
 --- a/include/leveldb/db.h
 +++ b/include/leveldb/db.h
 @@ -38,6 +38,17 @@ struct Range {
@@ -184,5 +184,5 @@ index 089707c..071f831 100644
    // Return a heap-allocated iterator over the contents of the database.
    // The result of NewIterator() is initially invalid (caller must
 -- 
-1.8.3.1
+2.9.2
 

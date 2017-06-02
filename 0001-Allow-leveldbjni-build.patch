@@ -1,0 +1,23 @@
+--- leveldb-1.20/build_detect_platform.0001~	2017-06-02 10:39:15.656295979 +0200
++++ leveldb-1.20/build_detect_platform	2017-06-02 10:39:59.028308884 +0200
+@@ -247,8 +247,8 @@ echo "CXX=$CXX" >> $OUTPUT
+ echo "PLATFORM=$PLATFORM" >> $OUTPUT
+ echo "PLATFORM_LDFLAGS=$PLATFORM_LDFLAGS" >> $OUTPUT
+ echo "PLATFORM_LIBS=$PLATFORM_LIBS" >> $OUTPUT
+-echo "PLATFORM_CCFLAGS=$PLATFORM_CCFLAGS" >> $OUTPUT
+-echo "PLATFORM_CXXFLAGS=$PLATFORM_CXXFLAGS" >> $OUTPUT
++echo "PLATFORM_CCFLAGS=$PLATFORM_CCFLAGS $PLATFORM_SHARED_CFLAGS" >> $OUTPUT
++echo "PLATFORM_CXXFLAGS=$PLATFORM_CXXFLAGS $PLATFORM_SHARED_CFLAGS" >> $OUTPUT
+ echo "PLATFORM_SSEFLAGS=$PLATFORM_SSEFLAGS" >> $OUTPUT
+ echo "PLATFORM_SHARED_CFLAGS=$PLATFORM_SHARED_CFLAGS" >> $OUTPUT
+ echo "PLATFORM_SHARED_EXT=$PLATFORM_SHARED_EXT" >> $OUTPUT
+--- leveldb-1.20/include/leveldb/slice.h.0001~	2017-03-02 01:08:02.000000000 +0100
++++ leveldb-1.20/include/leveldb/slice.h	2017-06-02 10:39:15.656295979 +0200
+@@ -77,7 +77,6 @@ class Slice {
+             (memcmp(data_, x.data_, x.size_) == 0));
+   }
+ 
+- private:
+   const char* data_;
+   size_t size_;
+ 

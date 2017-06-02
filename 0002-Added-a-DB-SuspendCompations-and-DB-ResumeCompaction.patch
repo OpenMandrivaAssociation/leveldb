@@ -1,22 +1,6 @@
-From d2545cbf7f7dfae4b1d01c299ed0e17d71664439 Mon Sep 17 00:00:00 2001
-From: Hiram Chirino <hiram@hiramchirino.com>
-Date: Tue, 30 Oct 2012 16:56:52 -0400
-Subject: [PATCH 5/6] Added a DB:SuspendCompations() and DB:ResumeCompactions()
- methods. Fixes issue #184
-
-https://code.google.com/p/leveldb/issues/detail?id=184
----
- db/db_impl.cc        | 36 ++++++++++++++++++++++++++++++++++++
- db/db_impl.h         |  9 +++++++++
- db/db_test.cc        |  4 ++++
- include/leveldb/db.h |  6 ++++++
- 4 files changed, 55 insertions(+)
-
-diff --git a/db/db_impl.cc b/db/db_impl.cc
-index 395d317..593a5b5 100644
---- a/db/db_impl.cc
-+++ b/db/db_impl.cc
-@@ -124,6 +124,9 @@ DBImpl::DBImpl(const Options& options, const std::string& dbname)
+--- leveldb-1.20/db/db_impl.cc.0002~	2017-03-02 01:08:02.000000000 +0100
++++ leveldb-1.20/db/db_impl.cc	2017-06-02 10:40:40.888354189 +0200
+@@ -125,6 +125,9 @@ DBImpl::DBImpl(const Options& raw_option
        dbname_(dbname),
        db_lock_(NULL),
        shutting_down_(NULL),
@@ -24,9 +8,9 @@ index 395d317..593a5b5 100644
 +      suspend_count(0),
 +      suspended(false),
        bg_cv_(&mutex_),
-       mem_(new MemTable(internal_comparator_)),
+       mem_(NULL),
        imm_(NULL),
-@@ -1398,6 +1401,39 @@ void DBImpl::GetApproximateSizes(
+@@ -1471,6 +1474,39 @@ void DBImpl::GetApproximateSizes(
    }
  }
  
@@ -66,10 +50,8 @@ index 395d317..593a5b5 100644
  // Default implementations of convenience methods that subclasses of DB
  // can call if they wish
  Status DB::Put(const WriteOptions& opt, const Slice& key, const Slice& value) {
-diff --git a/db/db_impl.h b/db/db_impl.h
-index 3c8d711..9f3949c 100644
---- a/db/db_impl.h
-+++ b/db/db_impl.h
+--- leveldb-1.20/db/db_impl.h.0002~	2017-03-02 01:08:02.000000000 +0100
++++ leveldb-1.20/db/db_impl.h	2017-06-02 10:40:09.517069848 +0200
 @@ -41,6 +41,8 @@ class DBImpl : public DB {
    virtual bool GetProperty(const Slice& property, std::string* value);
    virtual void GetApproximateSizes(const Range* range, int n, uint64_t* sizes);
@@ -79,7 +61,7 @@ index 3c8d711..9f3949c 100644
  
    // Extra methods (for testing) that are not in the public DB interface
  
-@@ -125,6 +127,13 @@ class DBImpl : public DB {
+@@ -133,6 +135,13 @@ class DBImpl : public DB {
    // Lock over the persistent DB state.  Non-NULL iff successfully acquired.
    FileLock* db_lock_;
  
@@ -93,11 +75,9 @@ index 3c8d711..9f3949c 100644
    // State below is protected by mutex_
    port::Mutex mutex_;
    port::AtomicPointer shutting_down_;
-diff --git a/db/db_test.cc b/db/db_test.cc
-index 49aae04..782be38 100644
---- a/db/db_test.cc
-+++ b/db/db_test.cc
-@@ -1801,6 +1801,10 @@ class ModelDB: public DB {
+--- leveldb-1.20/db/db_test.cc.0002~	2017-03-02 01:08:02.000000000 +0100
++++ leveldb-1.20/db/db_test.cc	2017-06-02 10:40:09.517069848 +0200
+@@ -1866,6 +1866,10 @@ class ModelDB: public DB {
  
    explicit ModelDB(const Options& options): options_(options) { }
    ~ModelDB() { }
@@ -108,11 +88,9 @@ index 49aae04..782be38 100644
    virtual Status Put(const WriteOptions& o, const Slice& k, const Slice& v) {
      return DB::Put(o, k, v);
    }
-diff --git a/include/leveldb/db.h b/include/leveldb/db.h
-index da8b11a..089707c 100644
---- a/include/leveldb/db.h
-+++ b/include/leveldb/db.h
-@@ -140,6 +140,12 @@ class DB {
+--- leveldb-1.20/include/leveldb/db.h.0002~	2017-03-02 01:08:02.000000000 +0100
++++ leveldb-1.20/include/leveldb/db.h	2017-06-02 10:40:09.517069848 +0200
+@@ -142,6 +142,12 @@ class DB {
    //    db->CompactRange(NULL, NULL);
    virtual void CompactRange(const Slice* begin, const Slice* end) = 0;
  
@@ -125,6 +103,3 @@ index da8b11a..089707c 100644
   private:
    // No copying allowed
    DB(const DB&);
--- 
-1.8.3.1
-
