@@ -77,6 +77,10 @@ PREFIX=%{_prefix} \
 LIBDIR=%{_libdir} \
 TMPDIR=/tmp/ \
 sh -x ./build_detect_platform build_config.mk ./
+%ifnarch %{ix86} x86_64
+# Don't even try to build SSE bits on non-x86...
+sed -i -e 's,^PLATFORM_SSEFLAGS=.*,PLATFORM_SSEFLAGS=,' build_config.mk
+%endif
 
 %make CC=%{__cc} CXX=%{__cxx} all
 
