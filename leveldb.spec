@@ -21,6 +21,8 @@ Patch0002:	https://pkgs.fedoraproject.org/cgit/rpms/leveldb.git/plain/0002-Added
 Patch0003:	https://pkgs.fedoraproject.org/cgit/rpms/leveldb.git/plain/0003-allow-Get-calls-to-avoid-copies-into-std-string.patch
 # https://groups.google.com/d/topic/leveldb/SbVPvl4j4vU/discussion
 Patch0004:	https://pkgs.fedoraproject.org/cgit/rpms/leveldb.git/plain/0004-bloom_test-failure-on-big-endian-archs.patch
+# Don't try to do SSE on ARM
+Patch0005:	leveldb-1.20-no-sse-on-ARM.patch
 # memenv is built only as a static library these days
 Obsoletes:	%mklibname memenv 1
 
@@ -68,19 +70,14 @@ export OPT="%{optflags} -DNDEBUG -fno-builtin-memcmp"
 export CFLAGS="$OPT"
 export CXXFLAGS="$OPT"
 export LDFLAGS="$OPT"
-TARGET_OS="Linux" \
-USE_SNAPPY=1 \
-USE_TCMALLOC=no \
-CC=%{__cc} \
-CXX=%{__cxx} \
-PREFIX=%{_prefix} \
-LIBDIR=%{_libdir} \
-TMPDIR=/tmp/ \
-sh -x ./build_detect_platform build_config.mk ./
-%ifnarch %{ix86} x86_64
-# Don't even try to build SSE bits on non-x86...
-sed -i -e 's,^PLATFORM_SSEFLAGS=.*,PLATFORM_SSEFLAGS=,' build_config.mk
-%endif
+export TARGET_OS="Linux"
+export USE_SNAPPY=1
+export USE_TCMALLOC=no
+export CC=%{__cc}
+export CXX=%{__cxx}
+export PREFIX=%{_prefix}
+export LIBDIR=%{_libdir}
+export TMPDIR=/tmp/
 
 %make CC=%{__cc} CXX=%{__cxx} all
 
