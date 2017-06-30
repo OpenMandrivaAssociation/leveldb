@@ -5,7 +5,7 @@
 
 Name:           leveldb
 Version:        1.20
-Release:        2
+Release:        3
 Summary:        A fast and lightweight key/value database library by Google
 Group:          Databases
 License:        BSD
@@ -53,7 +53,7 @@ Additional header files for development with %{name}.
 %package -n	%{staticname}
 Summary:        Static library file for %{name}
 Group:          System/Libraries
-Requires:       %{libname} = %{version}-%{release}
+Requires:       %{devname} = %{version}-%{release}
 
 %description -n	%{staticname}
 The static library for development with %{name}.
