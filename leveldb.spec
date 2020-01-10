@@ -60,7 +60,7 @@ The static library for development with %{name}.
 
 %prep
 %setup -q
-%apply_patches
+%autopatch -p1
 sed -i 's!/usr/local!%{_prefix}!g' Makefile
 sed -i 's!LIBDIR ?= lib!LIBDIR ?= %{_lib}!g' Makefile
 sed -i -e 's!AR) -r!AR) r!g' Makefile
