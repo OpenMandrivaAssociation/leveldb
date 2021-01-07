@@ -1,7 +1,6 @@
-From 82f6b7ee14a1ccfe442d80725234652f321664f5 Mon Sep 17 00:00:00 2001
 From: Yehuda Sadeh <yehuda@inktank.com>
 Date: Mon, 2 Jul 2012 14:29:06 -0700
-Subject: [PATCH 4/4] bloom_test failure on big endian archs
+Subject: [PATCH] bloom_test failure on big endian archs
 
 When running bloom_test on big endian machines it fails due to unacceptable
 false positive rate. I've looked into the issue and it seems that the
@@ -12,23 +11,17 @@ This issue holds up inclusion of ceph to debian due to ceph's use of
 leveldb. The fix can be to bump up the acceptable false positives.
 
 https://groups.google.com/d/topic/leveldb/SbVPvl4j4vU/discussion
----
- util/bloom_test.cc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/util/bloom_test.cc b/util/bloom_test.cc
-index 77fb1b3..10b70e4 100644
+index 436daa9..e4edc45 100644
 --- a/util/bloom_test.cc
 +++ b/util/bloom_test.cc
-@@ -141,7 +141,7 @@ TEST(BloomTest, VaryingLengths) {
+@@ -136,7 +136,7 @@ TEST(BloomTest, VaryingLengths) {
        fprintf(stderr, "False positives: %5.2f%% @ length = %6d ; bytes = %6d\n",
-               rate*100.0, length, static_cast<int>(FilterSize()));
+               rate * 100.0, length, static_cast<int>(FilterSize()));
      }
--    ASSERT_LE(rate, 0.02);   // Must not be over 2%
-+    ASSERT_LE(rate, 0.03);   // Must not be over 2%
-     if (rate > 0.0125) mediocre_filters++;  // Allowed, but not too often
-     else good_filters++;
-   }
--- 
-2.9.2
-
+-    ASSERT_LE(rate, 0.02);  // Must not be over 2%
++    ASSERT_LE(rate, 0.03);  // Must not be over 3%
+     if (rate > 0.0125)
+       mediocre_filters++;  // Allowed, but not too often
+     else

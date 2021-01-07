@@ -1,16 +1,25 @@
---- leveldb-1.20/db/db_impl.cc.0002~	2017-03-02 01:08:02.000000000 +0100
-+++ leveldb-1.20/db/db_impl.cc	2017-06-02 10:40:40.888354189 +0200
-@@ -125,6 +125,9 @@ DBImpl::DBImpl(const Options& raw_option
-       dbname_(dbname),
-       db_lock_(NULL),
-       shutting_down_(NULL),
+From: Hiram Chirino <hiram@hiramchirino.com>
+Date: Tue, 30 Oct 2012 16:56:52 -0400
+Subject: [PATCH] Added a DB:SuspendCompations() and DB:ResumeCompactions()
+ methods. Fixes issue #184
+
+https://code.google.com/p/leveldb/issues/detail?id=184
+
+diff --git a/db/db_impl.cc b/db/db_impl.cc
+index 761ebf6..da4e160 100644
+--- a/db/db_impl.cc
++++ b/db/db_impl.cc
+@@ -136,6 +136,9 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
+       table_cache_(new TableCache(dbname_, options_, TableCacheSize(options_))),
+       db_lock_(nullptr),
+       shutting_down_(false),
 +      suspend_cv(&suspend_mutex),
 +      suspend_count(0),
 +      suspended(false),
-       bg_cv_(&mutex_),
-       mem_(NULL),
-       imm_(NULL),
-@@ -1471,6 +1474,39 @@ void DBImpl::GetApproximateSizes(
+       background_work_finished_signal_(&mutex_),
+       mem_(nullptr),
+       imm_(nullptr),
+@@ -1455,6 +1458,39 @@ void DBImpl::GetApproximateSizes(const Range* range, int n, uint64_t* sizes) {
    }
  }
  
@@ -20,7 +29,7 @@
 +  suspend_count++;
 +  while( !suspended ) {
 +    suspend_cv.Wait();
-+  }  
++  }
 +}
 +void DBImpl::SuspendWork(void* db) {
 +  reinterpret_cast<DBImpl*>(db)->SuspendCallback();
@@ -43,16 +52,18 @@
 +    suspend_cv.SignalAll();
 +    while( suspended ) {
 +      suspend_cv.Wait();
-+    }  
++    }
 +}
 +
 +
  // Default implementations of convenience methods that subclasses of DB
  // can call if they wish
  Status DB::Put(const WriteOptions& opt, const Slice& key, const Slice& value) {
---- leveldb-1.20/db/db_impl.h.0002~	2017-03-02 01:08:02.000000000 +0100
-+++ leveldb-1.20/db/db_impl.h	2017-06-02 10:40:09.517069848 +0200
-@@ -41,6 +41,8 @@ class DBImpl : public DB {
+diff --git a/db/db_impl.h b/db/db_impl.h
+index ae87d6e..6213ccd 100644
+--- a/db/db_impl.h
++++ b/db/db_impl.h
+@@ -47,6 +47,8 @@ class DBImpl : public DB {
    virtual bool GetProperty(const Slice& property, std::string* value);
    virtual void GetApproximateSizes(const Range* range, int n, uint64_t* sizes);
    virtual void CompactRange(const Slice* begin, const Slice* end);
@@ -61,8 +72,8 @@
  
    // Extra methods (for testing) that are not in the public DB interface
  
-@@ -133,6 +135,13 @@ class DBImpl : public DB {
-   // Lock over the persistent DB state.  Non-NULL iff successfully acquired.
+@@ -169,6 +171,13 @@ class DBImpl : public DB {
+   // Lock over the persistent DB state.  Non-null iff successfully acquired.
    FileLock* db_lock_;
  
 +  port::Mutex suspend_mutex;
@@ -74,32 +85,34 @@
 +
    // State below is protected by mutex_
    port::Mutex mutex_;
-   port::AtomicPointer shutting_down_;
---- leveldb-1.20/db/db_test.cc.0002~	2017-03-02 01:08:02.000000000 +0100
-+++ leveldb-1.20/db/db_test.cc	2017-06-02 10:40:09.517069848 +0200
-@@ -1866,6 +1866,10 @@ class ModelDB: public DB {
+   std::atomic<bool> shutting_down_;
+diff --git a/db/db_test.cc b/db/db_test.cc
+index 78296d5..9a9c613 100644
+--- a/db/db_test.cc
++++ b/db/db_test.cc
+@@ -2024,6 +2024,8 @@ class ModelDB : public DB {
+   };
  
-   explicit ModelDB(const Options& options): options_(options) { }
-   ~ModelDB() { }
-+  
+   explicit ModelDB(const Options& options) : options_(options) {}
 +  virtual void SuspendCompactions() {}
 +  virtual void ResumeCompactions() {}
-+  
+   ~ModelDB() {}
    virtual Status Put(const WriteOptions& o, const Slice& k, const Slice& v) {
      return DB::Put(o, k, v);
-   }
---- leveldb-1.20/include/leveldb/db.h.0002~	2017-03-02 01:08:02.000000000 +0100
-+++ leveldb-1.20/include/leveldb/db.h	2017-06-02 10:40:09.517069848 +0200
-@@ -142,6 +142,12 @@ class DB {
-   //    db->CompactRange(NULL, NULL);
+diff --git a/include/leveldb/db.h b/include/leveldb/db.h
+index ea3d9e5..bd039c4 100644
+--- a/include/leveldb/db.h
++++ b/include/leveldb/db.h
+@@ -145,6 +145,12 @@ class LEVELDB_EXPORT DB {
+   // Therefore the following call will compact the entire database:
+   //    db->CompactRange(nullptr, nullptr);
    virtual void CompactRange(const Slice* begin, const Slice* end) = 0;
- 
++
 +  // Suspends the background compaction thread.  This methods
 +  // returns once suspended.
 +  virtual void SuspendCompactions() = 0;
 +  // Resumes a suspended background compation thread.
 +  virtual void ResumeCompactions() = 0;
-+
-  private:
-   // No copying allowed
-   DB(const DB&);
+ };
+ 
+ // Destroy the contents of the specified database.
