@@ -9,7 +9,7 @@ Release:        2
 Summary:        A fast and lightweight key/value database library by Google
 Group:          Databases
 License:        BSD
-URL:            http://github.com/google/leveldb
+URL:            https://github.com/google/leveldb
 Source0:        https://github.com/google/leveldb/archive/%{version}.tar.gz
 Source1:	https://github.com/google/benchmark/archive/refs/tags/v1.7.0.tar.gz
 # available in https://github.com/fusesource/leveldbjni/blob/leveldb.patch
